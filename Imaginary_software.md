@@ -118,7 +118,7 @@ https://www.nordic_online_discussion_platform.com/{forum_name}
 # Some telemetry that can be generated :
 Person generating telemetry for specific scenario will decide which would be the most important 
 ## Logs
-- IP addresses
+- Log telemetry can also include traces as added context 
 
 Python (Print() etc.):
 https://docs.python.org/3/howto/logging.html
@@ -156,7 +156,7 @@ Traces, metrics and logs should likely be saved in different places?
 
 
 # Telemetry for loading Main Page:
-
+- Include client and server IPs in traces and logs
 ## Traces:
 
 Check this link for how OpenTelemetry traces look like
