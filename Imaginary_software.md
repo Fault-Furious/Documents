@@ -132,8 +132,10 @@ https://useful.codes/logging-basics-in-javascript/
 
 
 
-
 All telemetry should mimic OTLP format because this is what the real data does
+
+Traces, metrics and logs should likely be saved in different places?
+
 
 # Telemetry for loading Main Page:
 
