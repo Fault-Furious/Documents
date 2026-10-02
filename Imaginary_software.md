@@ -1,6 +1,23 @@
-
+User, session or request identifier
 
 All info may be updated whenever necessary. This is to keep generated telemetry consistent
+
+**Looking at guides and documentation for how both real and fake telemetry is collected and should look like will likely help you with figuring out how the fake telemetry should look like better than this documentation alone!**
+
+
+
+Official OpenTelemetry documentation:
+
+https://opentelemetry.io/docs/specs/otel/overview/
+
+Opentelemetry logs guide:
+
+https://signoz.io/blog/opentelemetry-logs/
+
+OpenTelemetry metrics guide:
+
+https://www.dash0.com/knowledge/opentelemetry-metrics
+
 
 
 # Servers and their IP addresses and programming languages:
@@ -101,6 +118,7 @@ https://www.nordic_online_discussion_platform.com/{forum_name}
 # Some telemetry that can be generated :
 Person generating telemetry for specific scenario will decide which would be the most important 
 ## Logs
+- IP addresses
 
 Python (Print() etc.):
 https://docs.python.org/3/howto/logging.html
@@ -140,14 +158,26 @@ Traces, metrics and logs should likely be saved in different places?
 # Telemetry for loading Main Page:
 
 ## Traces:
+
+Check this link for how OpenTelemetry traces look like
+https://www.dash0.com/knowledge/opentelemetry-tracing
+
 - Send HTTP get request to https://www.nordic_online_discussion_platform.com/
 - request status 
-- Save both the client’s and server’s IP address
 ## Metrics:
+Check this for metrics:
+https://www.dash0.com/knowledge/opentelemetry-metrics
+
+
 -  update page views for main page (https://www.nordic_online_discussion_platform.com/)
 - save device type
 
 ## Logs:
+Check this for how OpenTelemetry logs look like:
+https://www.dash0.com/knowledge/opentelemetry-logging-explained
+
+
 - Javascript sends a log message if the CSS file was succesfully loaded
 - Javascript sends log message if seach bar couldn't load
+- Save both the client’s and server’s IP address
 
