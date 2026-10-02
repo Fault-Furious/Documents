@@ -98,7 +98,9 @@ https://www.nordic_online_discussion_platform.com/{forum_name}
 - Stockholm and Helsinki server can’t communicate
 
 
-# Some telemetry that can be generated (Person generating telemetry will decide which would be the most important for that action):
+# Some telemetry that can be generated :
+Person generating telemetry for specific scenario will decide which would be the most important 
+## Logs
 
 Python (Print() etc.):
 https://docs.python.org/3/howto/logging.html
