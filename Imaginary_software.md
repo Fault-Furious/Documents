@@ -118,6 +118,8 @@ https://www.nordic_online_discussion_platform.com/{forum_name}
 # Some telemetry that can be generated :
 Person generating telemetry for specific scenario will decide which would be the most important 
 ## Logs
+
+- You can also make custom log events instead of using print, console.log etc.
 - Log telemetry can also include traces as added context 
 
 Python (Print() etc.):
@@ -176,7 +178,7 @@ https://www.dash0.com/knowledge/opentelemetry-metrics
 Check this for how OpenTelemetry logs look like:
 https://www.dash0.com/knowledge/opentelemetry-logging-explained
 
-Decide what kind of telemetry log would be created when Javascript runs "console.log("Main page visit") "
+Decide what kind of telemetry log would be created when Javascript runs "console.log("Main page visit") " or sends a custom telemetry event (You decide)
 - Would be good if the log included trace_id to the related HTTP request trace
 
 
