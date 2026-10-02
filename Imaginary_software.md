@@ -163,7 +163,7 @@ Check this link for how OpenTelemetry traces look like
 https://www.dash0.com/knowledge/opentelemetry-tracing
 
 - Send HTTP get request to https://www.nordic_online_discussion_platform.com/
-- request status 
+- request status
 ## Metrics:
 Check this for metrics:
 https://www.dash0.com/knowledge/opentelemetry-metrics
@@ -176,8 +176,7 @@ https://www.dash0.com/knowledge/opentelemetry-metrics
 Check this for how OpenTelemetry logs look like:
 https://www.dash0.com/knowledge/opentelemetry-logging-explained
 
+Decide what kind of telemetry log would be created when Javascript runs "console.log("Main page visit") "
+- Would be good if the log included trace_id to the related HTTP request trace
 
-- Javascript sends a log message if the CSS file was succesfully loaded
-- Javascript sends log message if seach bar couldn't load
-- Save both the client’s and server’s IP address
 
