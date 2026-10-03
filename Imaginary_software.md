@@ -105,10 +105,13 @@ https://www.nordic_online_discussion_platform.com/{forum_name}
 # Some telemetry that can be generated :
 Person generating telemetry for specific scenario will decide which would be the most important 
 ## Logs
-Logs: "Why did this specific thing happen?" (detailed context and events)
-- You can also make custom log events instead of using print, console.log etc.
-- Log telemetry can also include traces as added context 
 
+Logs: "Why did this specific thing happen?" (detailed context and events)
+
+In context of telemetry, the whole context of a specific custom event. Often includes traces as context. (For example log in event could include both HTTP request and database query as context)
+
+
+Log could also refer to the more familiar logs, that is usually just the custom message sent to the console. Thought these can also be stored as telemetry
 Python (Print() etc.):
 https://docs.python.org/3/howto/logging.html
 
@@ -130,6 +133,8 @@ Metrics: "What is happening across all requests?" (aggregated statistics)
 
 ## traces:
 Traces: "What happened during this specific request?" (individual request lifecycle)
+
+In context of telemetry, refers to a specific request, query or function
 
 - HTTP requests
 
