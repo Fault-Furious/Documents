@@ -5,24 +5,9 @@ All info may be updated whenever necessary. This is to keep generated telemetry 
 **Looking at guides and documentation for how both real and fake telemetry is collected and should look like will likely help you with figuring out how the fake telemetry should look like better than this documentation alone!**
 
 
-
-Official OpenTelemetry documentation:
-
-https://opentelemetry.io/docs/specs/otel/overview/
-
-Opentelemetry logs guide:
-
-https://signoz.io/blog/opentelemetry-logs/
-
-OpenTelemetry metrics guide:
-
-https://www.dash0.com/knowledge/opentelemetry-metrics
-
-Difference between logs, metrics and traces:
-https://oneuptime.com/blog/post/2026-02-06-opentelemetry-traces-vs-metrics-vs-logs/view
-
-
 # Servers and their IP addresses and programming languages:
+
+- All Servers use Linux (Ubuntu), in case we are tracking system logs
 
 - Always use same IP addresses when requesting data from the same server
 
@@ -161,31 +146,6 @@ Traces: "What happened during this specific request?" (individual request lifecy
 Traces, metrics and logs should likely be saved in different places?
 
 
-# Telemetry for loading Main Page:
-- Include client and server IPs in traces and logs
-## Traces:
-Traces: "What happened during this specific request?" (individual request lifecycle)
-
-Check this link for how OpenTelemetry traces look like
-https://www.dash0.com/knowledge/opentelemetry-tracing
-
-- Send HTTP get request to https://www.nordic_online_discussion_platform.com/
-- request status
-## Metrics:
-Metrics: "What is happening across all requests?" (aggregated statistics)
-Check this for metrics:
-https://www.dash0.com/knowledge/opentelemetry-metrics
-
-
--  update page views for main page (https://www.nordic_online_discussion_platform.com/)
-- save device type
-
-## Logs:
-Logs: "Why did this specific thing happen?" (detailed context and events)
-Check this for how OpenTelemetry logs look like:
-https://www.dash0.com/knowledge/opentelemetry-logging-explained
-
-Decide what kind of telemetry log would be created when Javascript runs "console.log("Main page visit") " or sends a custom telemetry event (You decide)
 - Would be good if the log included trace_id to the related HTTP request trace
 
 
