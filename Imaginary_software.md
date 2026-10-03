@@ -1,4 +1,4 @@
-User, session or request identifier
+
 
 All info may be updated whenever necessary. This is to keep generated telemetry consistent
 
