@@ -120,7 +120,7 @@ https://www.nordic_online_discussion_platform.com/{forum_name}
 # Some telemetry that can be generated :
 Person generating telemetry for specific scenario will decide which would be the most important 
 ## Logs
-
+Logs: "Why did this specific thing happen?" (detailed context and events)
 - You can also make custom log events instead of using print, console.log etc.
 - Log telemetry can also include traces as added context 
 
@@ -136,6 +136,7 @@ https://useful.codes/logging-basics-in-javascript/
 
 
 ## Maybe most important metrics (Can store others as well):
+Metrics: "What is happening across all requests?" (aggregated statistics)
 
 - Page views (Could help detect which page the problem is occuring)
 - New visitors ( lots of new accounts are overwhelming service or new people are not joining)
@@ -143,6 +144,7 @@ https://useful.codes/logging-basics-in-javascript/
 - device type( Could tell if issue is mobile or desktop specific)
 
 ## traces:
+Traces: "What happened during this specific request?" (individual request lifecycle)
 
 - HTTP requests
 
