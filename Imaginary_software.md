@@ -18,6 +18,8 @@ OpenTelemetry metrics guide:
 
 https://www.dash0.com/knowledge/opentelemetry-metrics
 
+Difference between logs, metrics and traces:
+https://oneuptime.com/blog/post/2026-02-06-opentelemetry-traces-vs-metrics-vs-logs/view
 
 
 # Servers and their IP addresses and programming languages:
@@ -160,6 +162,7 @@ Traces, metrics and logs should likely be saved in different places?
 # Telemetry for loading Main Page:
 - Include client and server IPs in traces and logs
 ## Traces:
+Traces: "What happened during this specific request?" (individual request lifecycle)
 
 Check this link for how OpenTelemetry traces look like
 https://www.dash0.com/knowledge/opentelemetry-tracing
@@ -167,6 +170,7 @@ https://www.dash0.com/knowledge/opentelemetry-tracing
 - Send HTTP get request to https://www.nordic_online_discussion_platform.com/
 - request status
 ## Metrics:
+Metrics: "What is happening across all requests?" (aggregated statistics)
 Check this for metrics:
 https://www.dash0.com/knowledge/opentelemetry-metrics
 
@@ -175,6 +179,7 @@ https://www.dash0.com/knowledge/opentelemetry-metrics
 - save device type
 
 ## Logs:
+Logs: "Why did this specific thing happen?" (detailed context and events)
 Check this for how OpenTelemetry logs look like:
 https://www.dash0.com/knowledge/opentelemetry-logging-explained
 
