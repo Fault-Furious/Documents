@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nordic Platform — Triage Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#030615; --bg1:#060B2B; --bg2:#0B1A4A;
+  --glass:rgba(16,24,64,.58); --glass2:rgba(8,14,44,.72);
+  --stroke:rgba(120,160,255,.14); --stroke2:rgba(120,160,255,.26);
+  --fg:#F2F6FF; --dim:#9BA9D4; --faint:#6C7AA8;
+  --blue:#2F7BF6; --cyan:#4FD1FF; --ok:#01B574; --warn:#FFB547; --bad:#FF5B5B;
+  --violet:#8C6BFF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100%;color:var(--fg);
+  font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-size:14px;line-height:1.5;
+  background:
+    radial-gradient(1100px 620px at 78% -8%, rgba(47,123,246,.30), transparent 62%),
+    radial-gradient(900px 540px at 6% 4%, rgba(79,209,255,.14), transparent 58%),
+    radial-gradient(800px 700px at 50% 108%, rgba(140,107,255,.18), transparent 60%),
+    linear-gradient(170deg, var(--bg1) 0%, var(--bg0) 58%, #04081F 100%);
+  background-attachment:fixed;
+}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+
+.shell{display:grid;grid-template-columns:238px minmax(0,1fr);gap:20px;
+  max-width:1560px;margin:0 auto;padding:20px}
+@media (max-width:1020px){.shell{grid-template-columns:minmax(0,1fr);padding:14px;gap:14px}}
+
+/* sidebar */
+.side{position:sticky;top:20px;align-self:start;
+  background:var(--glass);border:1px solid var(--stroke);border-radius:20px;
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);padding:20px 16px}
+@media (max-width:1020px){.side{position:static;padding:14px}}
+.logo{display:flex;align-items:center;gap:10px;padding-bottom:16px;
+  border-bottom:1px solid var(--stroke);margin-bottom:16px}
+.logo .mark{width:30px;height:30px;border-radius:9px;flex:none;
+  background:linear-gradient(135deg,var(--cyan),var(--blue));
+  display:grid;place-items:center;font-weight:800;font-size:13px;color:#031028}
+.logo b{font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;line-height:1.25}
+.navlbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+  margin:16px 0 8px;padding-left:10px}
+.nav{display:flex;flex-direction:column;gap:5px}
+@media (max-width:1020px){.nav{flex-direction:row;flex-wrap:wrap}.navlbl{display:none}}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:12px;
+  color:var(--dim);text-decoration:none;font-size:13px;font-weight:500}
+.nav a .ic{width:28px;height:28px;border-radius:9px;flex:none;display:grid;place-items:center;
+  background:rgba(255,255,255,.05);font-size:13px}
+.nav a.on{background:var(--glass2);color:var(--fg);font-weight:600;
+  border:1px solid var(--stroke2)}
+.nav a.on .ic{background:linear-gradient(135deg,var(--cyan),var(--blue))}
+.helpbox{margin-top:20px;border-radius:16px;padding:14px;
+  background:linear-gradient(160deg,rgba(79,209,255,.26),rgba(47,123,246,.34));
+  border:1px solid var(--stroke2)}
+.helpbox b{display:block;font-size:12.5px;margin-bottom:3px}
+.helpbox p{margin:0 0 10px;font-size:11.5px;color:rgba(255,255,255,.8)}
+.helpbox button{width:100%}
+@media (max-width:1020px){.helpbox{display:none}}
+
+/* topbar */
+.main{min-width:0}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.crumb{font-size:11px;color:var(--faint)}
+.crumb b{display:block;font-size:19px;color:var(--fg);font-weight:700;letter-spacing:-.015em;margin-top:2px}
+.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;
+  padding:8px 13px;border-radius:14px;border:1px solid var(--stroke);
+  background:var(--glass);backdrop-filter:blur(18px);white-space:nowrap;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none;
+  box-shadow:0 0 10px currentColor;color:var(--ok)}
+.dot.warn{background:var(--warn);color:var(--warn)}
+.dot.bad{background:var(--bad);color:var(--bad)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.dot.live{animation:pulse 1.15s ease-in-out infinite}
+
+button,select{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--fg);
+  background:var(--glass);border:1px solid var(--stroke);border-radius:14px;
+  padding:8px 14px;cursor:pointer;backdrop-filter:blur(18px);white-space:nowrap}
+button:hover{border-color:var(--stroke2)}
+button.primary{background:linear-gradient(135deg,var(--cyan),var(--blue));
+  border-color:transparent;color:#021026;box-shadow:0 8px 26px rgba(47,123,246,.38)}
+button.danger[data-on="1"]{background:linear-gradient(135deg,#FF7A7A,#E03B3B);
+  border-color:transparent;color:#2A0505}
+button:disabled{opacity:.45;cursor:default;box-shadow:none}
+select option{background:#0B1230;color:#fff}
+
+/* grid + cards */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+@media (max-width:1020px){.grid{gap:13px}}
+.card{background:var(--glass);border:1px solid var(--stroke);border-radius:20px;
+  padding:18px;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  box-shadow:0 10px 40px rgba(2,6,28,.42);min-width:0}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}
+.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+@media (max-width:1180px){.c3{grid-column:span 6}.c4,.c5{grid-column:span 6}
+  .c7,.c8{grid-column:span 12}}
+@media (max-width:720px){.c3,.c4,.c5,.c6,.c7,.c8{grid-column:span 12}}
+
+.kpi{display:flex;align-items:center;gap:14px}
+.kpi .txt{min-width:0}
+.kpi small{display:block;font-size:11.5px;color:var(--faint);font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi b{display:block;font-size:20px;font-weight:700;letter-spacing:-.02em;margin-top:3px}
+.kpi b i{font-style:normal;font-size:12.5px;font-weight:700;margin-left:7px}
+.up{color:var(--ok)}.down{color:var(--bad)}.flat{color:var(--faint)}
+.kpi .ic{width:46px;height:46px;border-radius:14px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--cyan),var(--blue));font-size:19px;
+  box-shadow:0 8px 22px rgba(47,123,246,.34)}
+
+h3.t{margin:0 0 2px;font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+p.s{margin:0 0 14px;font-size:11.5px;color:var(--faint)}
+
+/* hero */
+.hero{position:relative;overflow:hidden;
+  background:linear-gradient(140deg,rgba(47,123,246,.42),rgba(140,107,255,.3) 52%,rgba(6,11,43,.9));
+  border:1px solid var(--stroke2)}
+.hero::after{content:"";position:absolute;right:-70px;top:-60px;width:300px;height:300px;
+  border-radius:50%;background:radial-gradient(circle,rgba(79,209,255,.55),transparent 66%);
+  filter:blur(14px);pointer-events:none}
+.hero .lbl{font-size:11px;color:rgba(255,255,255,.72);font-weight:600}
+.hero h2{margin:5px 0 8px;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.12}
+.hero p{margin:0;font-size:12.5px;color:rgba(255,255,255,.82);max-width:46ch}
+.hero .meta{margin-top:16px;display:flex;gap:9px;flex-wrap:wrap}
+.tag{font-size:10.5px;font-weight:600;padding:5px 10px;border-radius:9px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);
+  font-family:"JetBrains Mono",monospace}
+
+/* gauge */
+.gauge{display:grid;place-items:center;padding-top:4px}
+.gauge svg{width:100%;max-width:230px;height:auto;overflow:visible}
+.gauge .val{font-size:30px;font-weight:800;letter-spacing:-.03em}
+.gbar{margin-top:12px;background:var(--glass2);border:1px solid var(--stroke);
+  border-radius:14px;padding:11px 14px;width:100%;display:flex;
+  justify-content:space-between;align-items:center;font-size:11px;color:var(--faint)}
+.gbar b{display:block;font-size:14px;color:var(--fg);margin-top:2px}
+
+.mini{background:var(--glass2);border:1px solid var(--stroke);border-radius:14px;
+  padding:11px 13px;margin-bottom:9px}
+.mini small{font-size:11px;color:var(--faint);font-weight:600}
+.mini b{display:block;font-size:17px;font-weight:700;margin-top:2px;letter-spacing:-.02em}
+
+/* charts */
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--faint)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+
+/* agents */
+.agent{background:var(--glass2);border:1px solid var(--stroke);border-radius:16px;
+  padding:13px;margin-bottom:10px;position:relative;overflow:hidden}
+.agent:last-child{margin-bottom:0}
+.agent::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--faint)}
+.agent[data-ag="T"]::before{background:linear-gradient(180deg,var(--cyan),var(--blue))}
+.agent[data-ag="M"]::before{background:linear-gradient(180deg,#FFCF7A,var(--warn))}
+.agent[data-ag="L"]::before{background:linear-gradient(180deg,#B49CFF,var(--violet))}
+.ah{display:flex;align-items:center;gap:9px;margin-bottom:5px;flex-wrap:wrap}
+.ah b{font-size:13px;font-weight:700}
+.ah .src{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--faint);
+  border:1px solid var(--stroke);border-radius:7px;padding:2px 7px}
+.ah .st{margin-left:auto;font-size:10.5px;color:var(--faint);font-weight:600}
+.claim{font-size:12.5px;color:var(--dim);min-height:38px}
+.claim.active{color:var(--fg)}
+.meter{height:5px;background:rgba(255,255,255,.08);border-radius:4px;margin-top:10px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;border-radius:4px;
+  transition:width .65s cubic-bezier(.2,.7,.3,1)}
+.agent[data-ag="T"] .meter i{background:linear-gradient(90deg,var(--cyan),var(--blue))}
+.agent[data-ag="M"] .meter i{background:linear-gradient(90deg,#FFCF7A,var(--warn))}
+.agent[data-ag="L"] .meter i{background:linear-gradient(90deg,#B49CFF,var(--violet))}
+.mrow{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);margin-top:6px}
+
+/* belief */
+.hyp{padding:11px 0;border-bottom:1px solid var(--stroke)}
+.hyp:last-child{border-bottom:none;padding-bottom:0}
+.htop{display:flex;gap:10px;align-items:baseline}
+.htop b{font-size:12.5px;font-weight:500;flex:1;color:var(--dim)}
+.hyp.lead .htop b{color:var(--fg)}
+.htop .v{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600}
+.hbar{height:6px;background:rgba(255,255,255,.08);border-radius:4px;margin-top:9px;overflow:hidden}
+.hbar i{display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,rgba(79,209,255,.5),var(--blue));
+  transition:width .75s cubic-bezier(.2,.7,.3,1)}
+.hyp.lead .hbar i{background:linear-gradient(90deg,#2BE8A5,var(--ok))}
+.who{font-size:10px;color:var(--faint);margin-top:7px;font-family:"JetBrains Mono",monospace}
+
+.log{font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.8;
+  max-height:232px;overflow-y:auto}
+.log div{color:var(--dim);display:flex;gap:10px}
+.log .tm{color:var(--faint);flex:none}
+.log .hl{color:var(--fg)}.log .er{color:var(--bad)}.log .gd{color:var(--ok)}
+
+.verdict{border-radius:16px;padding:16px;border:1px solid var(--stroke);background:var(--glass2)}
+.verdict.done{border-color:rgba(1,181,116,.5);
+  background:linear-gradient(135deg,rgba(1,181,116,.16),var(--glass2))}
+.verdict.fail{border-color:rgba(255,91,91,.5);
+  background:linear-gradient(135deg,rgba(255,91,91,.15),var(--glass2))}
+.verdict h4{margin:0 0 8px;font-size:14.5px;font-weight:700}
+.verdict p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.62}
+.verdict .ev{font-family:"JetBrains Mono",monospace;font-size:10.5px;
+  color:var(--faint);margin-top:11px;padding-top:11px;border-top:1px solid var(--stroke)}
+
+.view{display:none}.view.on{display:block}
+.nav a{cursor:pointer}
+.tbl{width:100%;border-collapse:collapse;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+.tbl th{text-align:left;color:var(--faint);font-weight:600;padding:8px 10px 8px 0;
+  border-bottom:1px solid var(--stroke2);white-space:nowrap}
+.tbl td{padding:9px 10px 9px 0;border-bottom:1px solid var(--stroke);color:var(--dim);
+  vertical-align:top}
+.tbl td:last-child,.tbl th:last-child{padding-right:0}
+.tbl .k{color:var(--fg)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tiernm{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 9px}
+.nrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.node{flex:1;min-width:140px;background:var(--glass2);border:1px solid var(--stroke);
+  border-radius:14px;padding:12px 13px;border-left:3px solid var(--ok)}
+.node.warn{border-left-color:var(--warn)}
+.node.bad{border-left-color:var(--bad);background:linear-gradient(135deg,rgba(255,91,91,.12),var(--glass2))}
+.node b{display:block;font-size:12.5px;font-weight:700}
+.node em{display:block;font-style:normal;font-family:"JetBrains Mono",monospace;
+  font-size:10px;color:var(--faint);margin-top:3px}
+.node .m{font-family:"JetBrains Mono",monospace;font-size:11.5px;margin-top:8px;color:var(--dim)}
+.node.bad .m{color:var(--bad)}.node.warn .m{color:var(--warn)}
+.conn{text-align:center;font-family:"JetBrains Mono",monospace;font-size:10.5px;
+  color:var(--faint);margin:0 0 14px}
+.sql{background:rgba(0,0,0,.34);border:1px solid var(--stroke);border-radius:12px;
+  padding:13px 15px;font-family:"JetBrains Mono",monospace;font-size:11.5px;
+  color:var(--dim);overflow-x:auto;line-height:1.8;white-space:pre}
+.sql .kw{color:var(--cyan)}
+.setrow{display:flex;align-items:center;gap:14px;padding:13px 0;
+  border-bottom:1px solid var(--stroke);flex-wrap:wrap}
+.setrow:last-child{border-bottom:none}
+.setrow .lab{flex:1;min-width:180px}
+.setrow .lab b{display:block;font-size:13px}
+.setrow .lab span{font-size:11.5px;color:var(--faint)}
+input[type=range]{accent-color:var(--blue);width:150px}
+.empty{font-size:12.5px;color:var(--faint);padding:18px 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside class="side">
+    <div class="logo"><span class="mark">N</span><b>Nordic<br>Triage</b></div>
+    <nav class="nav">
+      <a data-go="console" class="on"><span class="ic">◧</span>Console</a>
+      <a data-go="topology"><span class="ic">◉</span>Topology</a>
+      <a data-go="telemetry"><span class="ic">≡</span>Telemetry</a>
+      <a data-go="agents"><span class="ic">◇</span>Agents</a>
+    </nav>
+    <p class="navlbl">Incident</p>
+    <nav class="nav">
+      <a data-go="history"><span class="ic">▤</span>History</a>
+      <a data-go="settings"><span class="ic">⚙</span>Settings</a>
+    </nav>
+    <div class="helpbox">
+      <b>Demo mode</b>
+      <p>Telemetry is generated. Run a scenario, then cut an agent link and run it again.</p>
+      <button id="theme2">Toggle contrast</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div class="crumb">Pages / Console<b>Incident Triage</b></div>
+      <div class="sp"></div>
+      <select id="scenario">
+        <option value="surge">Signup surge</option>
+        <option value="split">Stockholm ↔ Helsinki split</option>
+        <option value="forum">Forum messages won't load</option>
+      </select>
+      <span class="pill"><i class="dot" id="sysdot"></i><span id="sysmsg">All systems nominal</span></span>
+      <span class="pill mono" id="clock">t+00:00</span>
+      <button id="run" class="primary">Run incident</button>
+      <button id="cut" class="danger" data-on="0">Cut M↔L</button>
+      <button id="reset">Reset</button>
+    </div>
+
+    <section class="view on" data-view="console">
+    <div class="grid">
+
+      <div class="card c3"><div class="kpi"><div class="txt">
+        <small>Login success</small><b><span id="k1">98.9%</span><i class="flat" id="k1d">—</i></b>
+      </div><span class="ic">◎</span></div></div>
+
+      <div class="card c3"><div class="kpi"><div class="txt">
+        <small>Active sessions</small><b><span id="k2">1,284</span><i class="flat" id="k2d">—</i></b>
+      </div><span class="ic">◍</span></div></div>
+
+      <div class="card c3"><div class="kpi"><div class="txt">
+        <small>User DB connections</small><b><span id="k3">18/100</span><i class="flat" id="k3d">—</i></b>
+      </div><span class="ic">▤</span></div></div>
+
+      <div class="card c3"><div class="kpi"><div class="txt">
+        <small>p95 latency</small><b><span id="k4">44 ms</span><i class="flat" id="k4d">—</i></b>
+      </div><span class="ic">◷</span></div></div>
+
+      <div class="card c5 hero">
+        <p class="lbl" id="heroLbl">Standing by</p>
+        <h2 id="heroTitle">No open incident</h2>
+        <p id="heroBody">Three agents are watching separate telemetry stores. None of them can see the others' data.</p>
+        <div class="meta">
+          <span class="tag">traces</span><span class="tag">metrics</span><span class="tag">logs</span>
+          <span class="tag" id="heroId">—</span>
+        </div>
+      </div>
+
+      <div class="card c3">
+        <h3 class="t">Diagnosis confidence</h3>
+        <p class="s">Threshold 0.85</p>
+        <div class="gauge">
+          <svg viewBox="0 0 200 128" aria-label="Confidence gauge">
+            <defs>
+              <linearGradient id="gg" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#4FD1FF"/><stop offset="100%" stop-color="#2F7BF6"/>
+              </linearGradient>
+            </defs>
+            <path d="M18 112 A82 82 0 0 1 182 112" fill="none"
+                  stroke="rgba(255,255,255,.09)" stroke-width="13" stroke-linecap="round"/>
+            <path id="garc" d="M18 112 A82 82 0 0 1 182 112" fill="none"
+                  stroke="url(#gg)" stroke-width="13" stroke-linecap="round"
+                  stroke-dasharray="258" stroke-dashoffset="258"
+                  style="transition:stroke-dashoffset .8s cubic-bezier(.2,.7,.3,1)"/>
+            <text class="val" id="gval" x="100" y="104" text-anchor="middle" fill="#F2F6FF">0.00</text>
+          </svg>
+          <div class="gbar">
+            <span>agreement<b id="gagree">0 of 3</b></span>
+            <span style="text-align:right">status<b id="gstat">idle</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card c4">
+        <h3 class="t">Signal volume</h3>
+        <p class="s">Records ingested this window</p>
+        <div class="mini"><small>Traces · HTTP + SQL spans</small><b id="v1">12,480</b></div>
+        <div class="mini"><small>Metrics · page views, visitors</small><b id="v2">3,120</b></div>
+        <div class="mini" style="margin-bottom:0"><small>Logs · app + Postgres</small><b id="v3">8,640</b></div>
+      </div>
+
+      <div class="card c8">
+        <h3 class="t">Login success rate and p95 latency</h3>
+        <p class="s">Last 30 minutes, both app servers</p>
+        <svg class="chart" viewBox="0 0 640 220" preserveAspectRatio="none" aria-label="Latency and success chart">
+          <defs>
+            <linearGradient id="ar1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4FD1FF" stop-opacity=".48"/>
+              <stop offset="100%" stop-color="#4FD1FF" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="ar2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8C6BFF" stop-opacity=".34"/>
+              <stop offset="100%" stop-color="#8C6BFF" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g stroke="rgba(255,255,255,.07)" stroke-width="1">
+            <line x1="0" y1="40" x2="640" y2="40"/><line x1="0" y1="90" x2="640" y2="90"/>
+            <line x1="0" y1="140" x2="640" y2="140"/><line x1="0" y1="190" x2="640" y2="190"/>
+          </g>
+          <path id="fill1" fill="url(#ar1)" d=""/>
+          <path id="line1" fill="none" stroke="#4FD1FF" stroke-width="2.4" d=""
+                stroke-linejoin="round" stroke-linecap="round"/>
+          <path id="fill2" fill="url(#ar2)" d=""/>
+          <path id="line2" fill="none" stroke="#8C6BFF" stroke-width="2.4" d=""
+                stroke-linejoin="round" stroke-linecap="round"/>
+          <line id="onsetline" x1="0" y1="0" x2="0" y2="210" stroke="#FF5B5B"
+                stroke-width="1.4" stroke-dasharray="4 5" opacity="0"/>
+        </svg>
+        <div class="legend">
+          <span><i style="background:#4FD1FF"></i>login success rate</span>
+          <span><i style="background:#8C6BFF"></i>p95 latency</span>
+          <span><i style="background:#FF5B5B"></i>fault onset</span>
+        </div>
+      </div>
+
+      <div class="card c4">
+        <h3 class="t">Agents</h3>
+        <p class="s">One telemetry signal each, enforced by database roles</p>
+
+        <div class="agent" data-ag="T">
+          <div class="ah"><b>Trace agent</b><span class="src">traces</span><span class="st" data-st="T">idle</span></div>
+          <div class="claim" data-cl="T">No open incident.</div>
+          <div class="meter"><i data-mt="T"></i></div>
+          <div class="mrow"><span>confidence</span><span class="mono" data-cv="T">—</span></div>
+        </div>
+
+        <div class="agent" data-ag="M">
+          <div class="ah"><b>Metric agent</b><span class="src">metrics</span><span class="st" data-st="M">idle</span></div>
+          <div class="claim" data-cl="M">No open incident.</div>
+          <div class="meter"><i data-mt="M"></i></div>
+          <div class="mrow"><span>confidence</span><span class="mono" data-cv="M">—</span></div>
+        </div>
+
+        <div class="agent" data-ag="L">
+          <div class="ah"><b>Log agent</b><span class="src">logs</span><span class="st" data-st="L">idle</span></div>
+          <div class="claim" data-cl="L">No open incident.</div>
+          <div class="meter"><i data-mt="L"></i></div>
+          <div class="mrow"><span>confidence</span><span class="mono" data-cv="L">—</span></div>
+        </div>
+      </div>
+
+      <div class="card c5">
+        <h3 class="t">Shared belief</h3>
+        <p class="s">Claims ranked by cross-agent agreement</p>
+        <div id="belief"><p class="s" style="margin:0">Nothing proposed yet.</p></div>
+      </div>
+
+      <div class="card c7">
+        <h3 class="t">Activity</h3>
+        <p class="s">Summary exchange and cross-checks</p>
+        <div class="log" id="log"><div><span class="tm">t+00:00</span><span>console ready</span></div></div>
+      </div>
+
+      <div class="card c12">
+        <h3 class="t">Outcome</h3>
+        <p class="s">Written only when two agents independently agree above 0.85</p>
+        <div class="verdict" id="verdict">
+          <h4>Awaiting incident</h4>
+          <p>Pick a scenario and press Run. Then cut the metric-to-log link and run it again.</p>
+        </div>
+      </div>
+
+    </div>
+    </section>
+
+    <section class="view" data-view="topology">
+      <div class="grid">
+        <div class="card c8">
+          <h3 class="t">Platform topology</h3>
+          <p class="s">nordic_online_discussion_platform.com · self-hosted, Ubuntu</p>
+
+          <p class="tiernm">Pages</p>
+          <div class="nrow">
+            <div class="node" data-n="p1"><b>/</b><em>main · forum search</em><div class="m" data-m="p1">1,284 sessions</div></div>
+            <div class="node" data-n="p2"><b>/login</b><em>POST /auth</em><div class="m" data-m="p2">98.9% ok</div></div>
+            <div class="node" data-n="p3"><b>/signup</b><em>POST /users</em><div class="m" data-m="p3">99.1% ok</div></div>
+            <div class="node" data-n="p4"><b>/{forum}</b><em>100 msgs per page</em><div class="m" data-m="p4">p95 180 ms</div></div>
+          </div>
+          <p class="conn">↓ HTTP request spans · trace_id + parent_id propagated</p>
+
+          <p class="tiernm">Application servers</p>
+          <div class="nrow">
+            <div class="node" data-n="a1"><b>App 1 · Stockholm</b><em>170.57.176.88</em><div class="m" data-m="a1">p95 44 ms</div></div>
+            <div class="node" data-n="a2"><b>App 2 · Helsinki</b><em>104.172.209.255</em><div class="m" data-m="a2">p95 41 ms</div></div>
+          </div>
+          <p class="conn">↓ SQL query spans</p>
+
+          <p class="tiernm">Data services</p>
+          <div class="nrow" style="margin-bottom:0">
+            <div class="node" data-n="d1"><b>User DB · Vantaa</b><em>88.211.152.184</em><div class="m" data-m="d1">18/100 conns</div></div>
+            <div class="node" data-n="d2"><b>Message DB · Uppsala</b><em>255.186.179.197</em><div class="m" data-m="d2">22/100 conns</div></div>
+            <div class="node" data-n="d3"><b>Images</b><em>Cloudinary</em><div class="m" data-m="d3">p95 120 ms</div></div>
+          </div>
+        </div>
+
+        <div class="card c4">
+          <h3 class="t">Stack</h3>
+          <p class="s">As specified in the software plan</p>
+          <div class="mini"><small>App servers</small><b>Python + JavaScript</b></div>
+          <div class="mini"><small>Databases</small><b>PostgreSQL</b></div>
+          <div class="mini"><small>Operating system</small><b>Ubuntu Linux</b></div>
+          <div class="mini"><small>Images</small><b>Cloudinary</b></div>
+          <div class="mini" style="margin-bottom:0"><small>Telemetry format</small><b>OTLP</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="telemetry">
+      <div class="grid">
+        <div class="card c12">
+          <h3 class="t">Traces</h3>
+          <p class="s">Request and query spans · readable only by the trace agent</p>
+          <div class="scroll"><table class="tbl">
+            <thead><tr><th>span_id</th><th>trace_id</th><th>parent_id</th><th>name</th><th>target</th><th>ms</th><th>status</th></tr></thead>
+            <tbody>
+              <tr><td class="k">tr-8839</td><td>4a1f…c2</td><td>—</td><td>POST /login</td><td>170.57.176.88</td><td>41</td><td>OK</td></tr>
+              <tr><td class="k">tr-8840</td><td>4a1f…c2</td><td>tr-8839</td><td>SELECT users</td><td>88.211.152.184</td><td>12</td><td>OK</td></tr>
+              <tr><td class="k">tr-8841</td><td>9e07…b4</td><td>tr-8842</td><td>SELECT users</td><td>88.211.152.184</td><td>8000</td><td>ERROR</td></tr>
+              <tr><td class="k">tr-8842</td><td>9e07…b4</td><td>—</td><td>POST /login</td><td>104.172.209.255</td><td>8012</td><td>ERROR</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="card c6">
+          <h3 class="t">Metrics</h3>
+          <p class="s">Aggregates · readable only by the metric agent</p>
+          <div class="scroll"><table class="tbl">
+            <thead><tr><th>id</th><th>metric</th><th>value</th><th>window</th></tr></thead>
+            <tbody>
+              <tr><td class="k">mt-0418</td><td>page_views /signup</td><td>184</td><td>1 min</td></tr>
+              <tr><td class="k">mt-0419</td><td>returning_visitors</td><td>1,102</td><td>1 min</td></tr>
+              <tr><td class="k">mt-0420</td><td>new_visitors</td><td>2,208</td><td>1 min</td></tr>
+              <tr><td class="k">mt-0421</td><td>device_type desktop</td><td>61%</td><td>1 min</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="card c6">
+          <h3 class="t">Logs</h3>
+          <p class="s">Application and Postgres · readable only by the log agent</p>
+          <div class="scroll"><table class="tbl">
+            <thead><tr><th>id</th><th>level</th><th>source</th><th>message</th></tr></thead>
+            <tbody>
+              <tr><td class="k">lg-1191</td><td>INFO</td><td>app1</td><td>auth ok</td></tr>
+              <tr><td class="k">lg-1192</td><td>ERROR</td><td>app2</td><td>could not connect to user db</td></tr>
+              <tr><td class="k">lg-1193</td><td>FATAL</td><td>userdb</td><td>sorry, too many clients already</td></tr>
+              <tr><td class="k">lg-1194</td><td>FATAL</td><td>userdb</td><td>SQLSTATE 53300</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="agents">
+      <div class="grid">
+        <div class="card c12">
+          <h3 class="t">Isolation</h3>
+          <p class="s">Each agent connects with its own role. The database refuses anything else.</p>
+          <div class="sql"><span class="kw">CREATE ROLE</span> agent_trace  <span class="kw">LOGIN</span>;  <span class="kw">GRANT SELECT ON</span> traces  <span class="kw">TO</span> agent_trace;
+<span class="kw">CREATE ROLE</span> agent_metric <span class="kw">LOGIN</span>;  <span class="kw">GRANT SELECT ON</span> metrics <span class="kw">TO</span> agent_metric;
+<span class="kw">CREATE ROLE</span> agent_log    <span class="kw">LOGIN</span>;  <span class="kw">GRANT SELECT ON</span> logs    <span class="kw">TO</span> agent_log;
+
+<span class="kw">REVOKE ALL ON SCHEMA</span> public <span class="kw">FROM</span> PUBLIC;</div>
+          <p class="s" style="margin:14px 0 0">agent_metric querying the logs table returns InsufficientPrivilege. That failure is the test we run in week one.</p>
+        </div>
+
+        <div class="card c4">
+          <h3 class="t">Trace agent</h3>
+          <p class="s">traces table</p>
+          <div class="mini"><small>Sees</small><b>Where a request died</b></div>
+          <div class="mini"><small>Cannot see</small><b>Why, or how common</b></div>
+          <div class="mini" style="margin-bottom:0"><small>Role</small><b>agent_trace</b></div>
+        </div>
+        <div class="card c4">
+          <h3 class="t">Metric agent</h3>
+          <p class="s">metrics table</p>
+          <div class="mini"><small>Sees</small><b>The aggregate shape</b></div>
+          <div class="mini"><small>Cannot see</small><b>Any individual failure</b></div>
+          <div class="mini" style="margin-bottom:0"><small>Role</small><b>agent_metric</b></div>
+        </div>
+        <div class="card c4">
+          <h3 class="t">Log agent</h3>
+          <p class="s">logs table</p>
+          <div class="mini"><small>Sees</small><b>The error text itself</b></div>
+          <div class="mini"><small>Cannot see</small><b>Scale or request path</b></div>
+          <div class="mini" style="margin-bottom:0"><small>Role</small><b>agent_log</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="history">
+      <div class="grid">
+        <div class="card c12">
+          <h3 class="t">Run history</h3>
+          <p class="s">Every incident run in this session</p>
+          <div id="hist"><p class="empty">No runs yet. Go to Console and run a scenario.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="settings">
+      <div class="grid">
+        <div class="card c7">
+          <h3 class="t">Simulation settings</h3>
+          <p class="s">These change how the next run behaves</p>
+          <div class="setrow">
+            <div class="lab"><b>Confidence threshold</b><span>Minimum agreement before a diagnosis is written</span></div>
+            <input type="range" id="setTh" min="50" max="99" value="85">
+            <span class="mono" id="setThV">0.85</span>
+          </div>
+          <div class="setrow">
+            <div class="lab"><b>Tick speed</b><span>How fast the simulated clock advances</span></div>
+            <input type="range" id="setSp" min="120" max="900" step="30" value="420">
+            <span class="mono" id="setSpV">420 ms</span>
+          </div>
+          <div class="setrow">
+            <div class="lab"><b>Metric ↔ Log link</b><span>Cutting it separates the symptom from its cause</span></div>
+            <button id="setCut">Currently connected</button>
+          </div>
+        </div>
+        <div class="card c5">
+          <h3 class="t">About this console</h3>
+          <p class="s">Demo build</p>
+          <p style="font-size:12.5px;color:var(--dim);margin:0 0 10px">Telemetry here is generated, not collected. The incident logic matches the real system: agents read one signal each, exchange summaries rather than rows, and a diagnosis is written only when two independent agents agree above the threshold.</p>
+          <p style="font-size:12.5px;color:var(--dim);margin:0">Cutting a link is the experiment that matters. The system should stop rather than guess.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+var cut=false,running=false,timer=null,step=0,t=0,scen="surge",belief={};
+var TH=0.85,SPEED=420,history=[];
+var $=function(s){return document.querySelector(s)};
+
+var SC={
+ surge:{id:"INC-4417",lbl:"Signup surge",
+  hero:["Login failing across both app servers","A 12x spike in new accounts coincides with the user database refusing connections."],
+  kpis:{k1:["34%","down"],k2:["2,940","up"],k3:["100/100","down"],k4:["8,100 ms","down"]},
+  claims:{
+   T:{t:"POST /login spans fail at the SQL child span to 88.211.152.184 after an 8 s timeout",c:.60,ev:"tr-8841"},
+   M:{t:"New visitors up 12x in six minutes, concentrated on /signup, desktop and mobile alike",c:.55,ev:"mt-0420"},
+   L:{t:"User DB: FATAL sorry, too many clients already (SQLSTATE 53300), repeating",c:.70,ev:"lg-1193"}},
+  lead:"L",
+  cor:{M:[.92,"the signup surge explains the connection demand"],
+       T:[.84,"every failing span terminates at the user DB, never the message DB"]},
+  title:"Root cause: signup surge exhausted the user database pool",
+  body:"A 12x spike in new signups drove both app servers to open connections to the user database in Vantaa faster than they were released. Postgres reached max_connections at 100, began refusing with SQLSTATE 53300, and every /login and /signup request failed at its SQL span.<br><br><b>Fix:</b> put a connection pooler in front of the user DB and rate-limit signups. The message database in Uppsala was never involved.",
+  ev:"lg-1193 · mt-0420 · tr-8841 · user DB 88.211.152.184",
+  fail:"The log agent holds the symptom, 100 of 100 connections refused. The metric agent holds the cause, a 12x signup surge. With the link cut they never meet, so the top claim stalls below threshold.<br><br><b>This is the correct outcome.</b> Answering here would mean guessing."},
+
+ split:{id:"INC-4418",lbl:"Stockholm ↔ Helsinki split",
+  hero:["App servers cannot reach each other","Databases respond normally. Cross-server requests leave traces that never resolve."],
+  kpis:{k1:["96.1%","down"],k2:["1,190","down"],k3:["21/100","flat"],k4:["310 ms","down"]},
+  claims:{
+   T:{t:"Cross-server spans end without a child span, parent_id never resolves",c:.65,ev:"tr-5512"},
+   M:{t:"Page views flat overall, but forum search results diverge depending on server",c:.45,ev:"mt-0611"},
+   L:{t:"Both app servers log connection refused to the peer IP, no database errors anywhere",c:.72,ev:"lg-2204"}},
+  lead:"L",
+  cor:{T:[.90,"orphaned parent_id values match the cross-server calls exactly"],
+       M:[.80,"divergent search results are consistent with a one-sided view"]},
+  title:"Root cause: network partition between Stockholm and Helsinki",
+  body:"The two app servers can each reach their databases but not each other. Cross-server requests leave an unresolved parent_id in the trace, and forum search returns different results depending on which server answered. No database error appears anywhere, which rules out the data tier entirely.<br><br><b>Fix:</b> restore the link between 170.57.176.88 and 104.172.209.255, then reconcile the divergent caches.",
+  ev:"lg-2204 · tr-5512 · mt-0611 · both app servers",
+  fail:"The log agent sees connection refused. The trace agent holds the orphaned spans that prove the inter-server path specifically is at fault. Cut the link and neither finding reaches the other."},
+
+ forum:{id:"INC-4419",lbl:"Forum messages won't load",
+  hero:["Forum pages render with no messages","Login and signup are unaffected, which isolates the fault to the message tier."],
+  kpis:{k1:["98.4%","flat"],k2:["1,110","down"],k3:["19/100","flat"],k4:["6,200 ms","down"]},
+  claims:{
+   T:{t:"SELECT on the message table at 255.186.179.197 exceeds 30 s and is cancelled",c:.68,ev:"tr-7730"},
+   M:{t:"Forum page views steady, but time on page collapsed and bounces tripled",c:.40,ev:"mt-0877"},
+   L:{t:"Message DB: canceling statement due to statement timeout, no login errors",c:.66,ev:"lg-3310"}},
+  lead:"T",
+  cor:{L:[.91,"timeout cancellations line up one to one with the cancelled spans"],
+       M:[.78,"collapsed time on page is what an empty forum looks like to users"]},
+  title:"Root cause: message database query timeouts",
+  body:"Reads against the message database in Uppsala exceed the 30 s statement timeout and are cancelled, so forum pages render with no messages. Login and signup are untouched, which isolates the fault to the message tier rather than the user DB or the app servers.<br><br><b>Fix:</b> check indexing on the message table and the 100-per-page query plan before raising the timeout.",
+  ev:"tr-7730 · lg-3310 · mt-0877 · message DB 255.186.179.197",
+  fail:"The trace agent sees cancelled queries. The log agent holds the timeout reason that confirms them. With the link cut the two never combine, and the system stops short rather than inventing a cause."}
+};
+
+function fmt(s){var m=Math.floor(s/60),x=s%60;
+  return "t+"+String(m).padStart(2,"0")+":"+String(x).padStart(2,"0")}
+function log(m,c){var l=$("#log"),d=document.createElement("div");
+  d.innerHTML='<span class="tm">'+fmt(t)+'</span><span class="'+(c||"")+'">'+m+'</span>';
+  l.appendChild(d);l.scrollTop=l.scrollHeight}
+function agent(a,st,cl,cf){
+  document.querySelector('[data-st="'+a+'"]').textContent=st;
+  if(cl!==undefined){var e=document.querySelector('[data-cl="'+a+'"]');
+    e.textContent=cl;e.classList.add("active")}
+  if(cf!==undefined){
+    document.querySelector('[data-mt="'+a+'"]').style.width=Math.round(cf*100)+"%";
+    document.querySelector('[data-cv="'+a+'"]').textContent=cf.toFixed(2)}}
+function score(h){var v=Object.keys(h.scores).map(function(k){return h.scores[k]})
+    .filter(function(x){return x>=.35});
+  if(!v.length)return 0;
+  var m=v.reduce(function(a,b){return a+b},0)/v.length;
+  return Math.min(1,m*(1+.06*(v.length-1)))}
+function names(k){return {T:"traces",M:"metrics",L:"logs"}[k]}
+function renderBelief(){
+  var ids=Object.keys(belief);if(!ids.length)return;
+  ids.sort(function(a,b){return score(belief[b])-score(belief[a])});
+  $("#belief").innerHTML=ids.map(function(id,i){
+    var h=belief[id],s=score(h);
+    var who=Object.keys(h.scores).filter(function(k){return h.scores[k]>=.35}).sort();
+    return '<div class="hyp'+(i===0&&s>=TH?' lead':'')+'">'+
+      '<div class="htop"><b>'+h.text+'</b><span class="v">'+s.toFixed(3)+'</span></div>'+
+      '<div class="hbar"><i style="width:'+Math.round(s*100)+'%"></i></div>'+
+      '<div class="who">backed by '+(who.length?who.map(names).join(", "):"nobody")+
+      ' · '+who.length+' of 3 signals</div></div>'}).join("");
+  var tp=topClaim();
+  gauge(tp[1],tp[0]?Object.keys(tp[0].scores).filter(function(k){return tp[0].scores[k]>=.35}).length:0);
+}
+function topClaim(){var ids=Object.keys(belief);if(!ids.length)return[null,0];
+  ids.sort(function(a,b){return score(belief[b])-score(belief[a])});
+  return [belief[ids[0]],score(belief[ids[0]])]}
+function gauge(v,n){
+  $("#garc").style.strokeDashoffset=258-258*Math.min(1,v);
+  $("#gval").textContent=v.toFixed(2);
+  $("#gagree").textContent=(n||0)+" of 3";
+  $("#gstat").textContent=v>=TH?"settled":(v>0?"below threshold":"idle");
+}
+function sys(st,m){$("#sysdot").className="dot"+(st?" "+st+" live":"");$("#sysmsg").textContent=m}
+var TOPO={
+ surge:{p3:["bad","12x new signups"],p2:["bad","34% ok"],p1:["warn","2,940 sessions"],
+   a1:["warn","p95 8,100 ms"],a2:["warn","p95 7,900 ms"],d1:["bad","100/100 conns"]},
+ split:{a1:["bad","peer unreachable"],a2:["bad","peer unreachable"],
+   p4:["warn","stale pages"],p1:["warn","results diverge"]},
+ forum:{p4:["bad","0 msgs returned"],d2:["bad","query timeout 30 s"],
+   a1:["warn","p95 6,200 ms"],a2:["warn","p95 6,000 ms"]}};
+var TOPOBASE={p1:"1,284 sessions",p2:"98.9% ok",p3:"99.1% ok",p4:"p95 180 ms",
+ a1:"p95 44 ms",a2:"p95 41 ms",d1:"18/100 conns",d2:"22/100 conns",d3:"p95 120 ms"};
+function topo(name){
+ Object.keys(TOPOBASE).forEach(function(k){
+   var el=document.querySelector('[data-n="'+k+'"]'); if(!el) return;
+   el.classList.remove("warn","bad");
+   var m=document.querySelector('[data-m="'+k+'"]'); if(m) m.textContent=TOPOBASE[k];
+ });
+ if(!name) return;
+ var map=TOPO[name]||{};
+ Object.keys(map).forEach(function(k){
+   var el=document.querySelector('[data-n="'+k+'"]'); if(!el) return;
+   el.classList.add(map[k][0]);
+   var m=document.querySelector('[data-m="'+k+'"]'); if(m) m.textContent=map[k][1];
+ });
+}
+function record(S,s,ok){
+ history.unshift({id:S.id,lbl:S.lbl,conf:s,ok:ok,cut:cut,th:TH,
+   when:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})});
+ renderHistory();
+}
+function renderHistory(){
+ var h=$("#hist"); if(!h) return;
+ if(!history.length){h.innerHTML='<p class="empty">No runs yet. Go to Console and run a scenario.</p>';return}
+ h.innerHTML='<div class="scroll"><table class="tbl"><thead><tr>'+
+  '<th>time</th><th>incident</th><th>scenario</th><th>links</th><th>threshold</th>'+
+  '<th>confidence</th><th>outcome</th></tr></thead><tbody>'+
+  history.map(function(r){
+    return '<tr><td>'+r.when+'</td><td class="k">'+r.id+'</td><td>'+r.lbl+'</td>'+
+      '<td>'+(r.cut?'M↔L cut':'all up')+'</td><td>'+r.th.toFixed(2)+'</td>'+
+      '<td class="k">'+r.conf.toFixed(3)+'</td>'+
+      '<td style="color:'+(r.ok?'var(--ok)':'var(--bad)')+'">'+
+      (r.ok?'diagnosis written':'declined to answer')+'</td></tr>'}).join("")+
+  '</tbody></table></div>';
+}
+function kpi(S){if(!S){ ["k1","k2","k3","k4"].forEach(function(k){
+    document.getElementById(k+"d").className="flat";
+    document.getElementById(k+"d").textContent="—"});
+    $("#k1").textContent="98.9%";$("#k2").textContent="1,284";
+    $("#k3").textContent="18/100";$("#k4").textContent="44 ms";return}
+  Object.keys(S.kpis).forEach(function(k){
+    document.getElementById(k).textContent=S.kpis[k][0];
+    var d=document.getElementById(k+"d");
+    d.className=S.kpis[k][1];
+    d.textContent=S.kpis[k][1]==="down"?"▼":S.kpis[k][1]==="up"?"▲":"—"})}
+function verdict(cls,h,b,e){var v=$("#verdict");v.className="verdict"+(cls?" "+cls:"");
+  v.innerHTML='<h4>'+h+'</h4><p>'+b+'</p>'+(e?'<div class="ev">'+e+'</div>':'')}
+
+/* chart */
+function series(broken){
+  var n=48,ok=[],lat=[];
+  for(var i=0;i<n;i++){
+    var bad=broken&&i>=28;
+    ok.push(bad?34+Math.sin(i)*3:90+Math.sin(i*.7)*2.5);
+    lat.push(bad?78+Math.sin(i*.9)*6:14+Math.sin(i*.6)*3);
+  } return [ok,lat];
+}
+function path(vals,close){
+  var n=vals.length,d="";
+  for(var i=0;i<n;i++){
+    var x=(i/(n-1))*640, y=210-(vals[i]/100)*190;
+    d+=(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1);
+  }
+  return close? d+"L640 215L0 215Z" : d;
+}
+function drawChart(broken){
+  var s=series(broken);
+  $("#line1").setAttribute("d",path(s[0]));
+  $("#fill1").setAttribute("d",path(s[0],true));
+  $("#line2").setAttribute("d",path(s[1]));
+  $("#fill2").setAttribute("d",path(s[1],true));
+  var ol=$("#onsetline");
+  if(broken){ol.setAttribute("x1",373);ol.setAttribute("x2",373);ol.setAttribute("opacity","1")}
+  else ol.setAttribute("opacity","0");
+}
+
+var SCRIPT=[
+ {at:0,go:function(S){
+   sys("warn","Degradation detected");
+   kpi(S); drawChart(true); topo(scen);
+   $("#heroLbl").textContent=S.id+" · open";
+   $("#heroTitle").textContent=S.hero[0];
+   $("#heroBody").textContent=S.hero[1];
+   $("#heroId").textContent=S.id;
+   log("incident "+S.id+" opened · dispatched to 3 agents","hl");
+   verdict("",S.id+" open","Each agent is querying its own telemetry store.");
+ }},
+ {at:5,go:function(){
+   agent("T","reading traces");agent("M","reading metrics");agent("L","reading logs");
+   log("roles restrict each agent to one signal · no cross-reads possible");
+   $("#v1").textContent="18,920";$("#v2").textContent="9,480";$("#v3").textContent="22,110";
+ }},
+ {at:10,go:function(S){
+   ["T","M","L"].forEach(function(a){
+     var c=S.claims[a];agent(a,"proposed",c.t,c.c);
+     belief[a]={text:c.t,scores:{}};belief[a].scores[a]=c.c});
+   renderBelief();log("3 local hypotheses · none sufficient alone","hl");
+ }},
+ {at:16,go:function(){
+   if(cut){log("exchange round 1 · T↔L ok · M↔L BLOCKED","er");agent("M","isolated")}
+   else{log("exchange round 1 · summaries only, no raw telemetry rows");
+     ["T","M","L"].forEach(function(a){agent(a,"sharing")})}
+ }},
+ {at:22,go:function(S){
+   var first=Object.keys(S.cor)[0];
+   if(cut&&first==="M"){
+     log("metric agent never receives the claim — link down","er");
+     belief[S.lead].scores.T=.44;agent("T","cross-checked",undefined,.44);
+     log("trace agent cross-checks: partial support only (0.44)");
+   }else{
+     var r=S.cor[first];belief[S.lead].scores[first]=r[0];
+     agent(first,"corroborating",undefined,r[0]);
+     log("cross-check: "+r[1]+" → "+r[0].toFixed(2),"gd")}
+   renderBelief();
+ }},
+ {at:28,go:function(S){
+   var second=Object.keys(S.cor)[1];
+   if(cut){log("exchange round 2 · belief unchanged on both sides")}
+   else{var r=S.cor[second];belief[S.lead].scores[second]=r[0];
+     agent(second,"corroborating",undefined,r[0]);
+     log("cross-check: "+r[1]+" → "+r[0].toFixed(2),"gd");renderBelief()}
+ }},
+ {at:34,go:function(S){
+   var s=topClaim()[1];
+   record(S,s,s>=TH);
+   if(s>=TH){
+     sys("","Root cause identified");
+     ["T","M","L"].forEach(function(a){agent(a,"settled")});
+     log("threshold cleared ("+s.toFixed(3)+") · writing diagnosis","gd");
+     verdict("done",S.title,S.body,"confidence "+s.toFixed(3)+" · evidence "+S.ev);
+   }else{
+     sys("bad","Diagnosis inconclusive");
+     agent("T","stalled");agent("L","stalled");agent("M","unreachable");
+     log("belief stable but confidence "+s.toFixed(3)+" < "+TH.toFixed(2),"er");
+     log("no diagnosis written","er");
+     verdict("fail","No diagnosis — evidence could not be joined",S.fail,
+       "top claim "+s.toFixed(3)+" · 2 of 3 signals · one agent unreachable");
+   }
+   stop();
+ }}
+];
+
+function tick(){t++;$("#clock").textContent=fmt(t);
+  var S=SC[scen];
+  while(step<SCRIPT.length&&SCRIPT[step].at<=t){SCRIPT[step].go(S);step++}}
+function stop(){clearInterval(timer);running=false;$("#run").disabled=false}
+
+function reset(){
+  clearInterval(timer);running=false;step=0;t=0;belief={};
+  $("#clock").textContent="t+00:00";$("#run").disabled=false;
+  sys("","All systems nominal");kpi(null);drawChart(false);gauge(0,0);topo(null);
+  $("#v1").textContent="12,480";$("#v2").textContent="3,120";$("#v3").textContent="8,640";
+  $("#heroLbl").textContent="Standing by";
+  $("#heroTitle").textContent="No open incident";
+  $("#heroBody").textContent="Three agents are watching separate telemetry stores. None of them can see the others' data.";
+  $("#heroId").textContent="—";
+  ["T","M","L"].forEach(function(a){agent(a,"idle",undefined,0);
+    var c=document.querySelector('[data-cl="'+a+'"]');
+    c.textContent="No open incident.";c.classList.remove("active");
+    document.querySelector('[data-cv="'+a+'"]').textContent="—"});
+  $("#belief").innerHTML='<p class="s" style="margin:0">Nothing proposed yet.</p>';
+  $("#log").innerHTML='<div><span class="tm">t+00:00</span><span>console ready</span></div>';
+  verdict("","Awaiting incident","Pick a scenario and press Run. Then cut the metric-to-log link and run it again.");
+}
+
+$("#run").onclick=function(){if(running)return;reset();running=true;this.disabled=true;
+  timer=setInterval(tick,SPEED)};
+function syncCut(){
+  var b=$("#cut"); b.dataset.on=cut?"1":"0"; b.textContent=cut?"M↔L cut":"Cut M↔L";
+  var sb=$("#setCut"); if(sb) sb.textContent=cut?"Currently cut":"Currently connected";
+}
+$("#cut").onclick=function(){cut=!cut;syncCut();reset()};
+$("#scenario").onchange=function(){scen=this.value;reset()};
+$("#reset").onclick=reset;
+$("#theme2").onclick=function(){
+  document.body.style.filter=document.body.style.filter?"":"contrast(1.12) saturate(1.1)"};
+
+/* navigation */
+Array.prototype.forEach.call(document.querySelectorAll('[data-go]'),function(a){
+  a.onclick=function(e){
+    e.preventDefault();
+    var v=a.dataset.go;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-go]'),function(x){
+      x.classList.toggle('on',x===a)});
+    Array.prototype.forEach.call(document.querySelectorAll('.view'),function(sec){
+      sec.classList.toggle('on',sec.dataset.view===v)});
+    $(".crumb").innerHTML='Pages / '+v.charAt(0).toUpperCase()+v.slice(1)+
+      '<b>'+({console:"Incident Triage",topology:"Platform Topology",
+             telemetry:"Telemetry Stores",agents:"Agent Isolation",
+             history:"Run History",settings:"Settings"})[v]+'</b>';
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+});
+
+/* settings */
+var th=$("#setTh"), sp=$("#setSp");
+if(th) th.oninput=function(){TH=this.value/100;$("#setThV").textContent=TH.toFixed(2);
+  var g=$("#gstat"); if(g&&!running) g.textContent="idle";};
+if(sp) sp.oninput=function(){SPEED=+this.value;$("#setSpV").textContent=SPEED+" ms"};
+var sc=$("#setCut"); if(sc) sc.onclick=function(){cut=!cut;syncCut();reset()};
+
+renderHistory();
+drawChart(false);
+})();
+</script>
+</body>
+</html>
